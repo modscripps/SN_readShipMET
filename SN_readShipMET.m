@@ -7,6 +7,8 @@ function MET = SN_readShipMET(filename)
 % Created 2012/03/30 San Nguyen
 % Updated 2012/06/09 San Nguyen - updated to read MET data for most ships
 % not just the ones on the R/V Revelle
+% Updated 2015/09/02 San Nguyen - update to combine MET data without losing
+% any fields added later on
 %
 
 if ischar(filename)
@@ -23,10 +25,21 @@ if ischar(filename)
             else
                 disp(['reading ' my_METfiles(1).name]);
                 MET = SN_readShipMET([filename '/' my_METfiles(1).name]);
+                varnames = fieldnames(MET);
                 MET = repmat(MET,size(my_METfiles));
                 for i = 2:length(my_METfiles)
                     disp(['reading ' my_METfiles(i).name]);
-                    MET(i) = SN_readShipMET([filename '/' my_METfiles(i).name]);
+                    MET_tmp = SN_readShipMET([filename '/' my_METfiles(i).name]);
+                    for k = 1:numel(varnames)
+                        if strcmpi(varnames{k},'README')
+                            MET(i).(varnames{k}) = MET_tmp.(varnames{k});
+                        end
+                        if isfield(MET_tmp,varnames{k})
+                            MET(i).(varnames{k}) = MET_tmp.(varnames{k});
+                        else
+                            MET(i).(varnames{k}) = NaN(size(varnames{1}));
+                        end
+                    end
                 end
                 MET = SN_combineMET(MET);
             end
@@ -99,7 +112,7 @@ if isnan(time_ind)
 end
 
 frewind(fid)
-data = textscan(fid,data_str,'delimiter',' \t','MultipleDelimsAsOne',true,'CommentStyle','#');
+data = textscan(fid,[data_str '%*[^\n]'],'delimiter',' \t','MultipleDelimsAsOne',true,'CommentStyle','#');
 data{time_ind} = datenum(data{time_ind},'HHMMSS')-datenum('000000','HHMMSS')+METdate;
 
 %make sure that the time from one day is not mistaken for the other day
@@ -191,6 +204,13 @@ MET.README = {...
 end
 
 function MET = SN_combineMET(varargin)
+% SN_combineMET - combines MET data files in MATLAB format that was
+% converted using SN_readShipMET
+%
+% SN_combineMET(MET1,MET2,MET3,...) returns a MET structure of variables described
+% for MET data files
+%
+% Written 2015/09/02 - San Nguyen snguyen@opg1.ucsd.edu
 
 if nargin < 1 
     MET = [];
@@ -212,11 +232,28 @@ if nargin == 1
 end
 
 MET_fields = fieldnames(varargin{1});
+for i = 2:nargin
+    tmp_fields = fieldnames(varargin{i});
+    for j = 1:numel(tmp_fields)
+        if ~ismember(tmp_fields{j},MET_fields)
+            MET_fields{end+1} = tmp_fields{j};
+        end
+    end
+end
 
-for i=1:(length(MET_fields)-1)
+for i=1:(length(MET_fields))
+    if strcmpi(MET_fields{i},'README')
+        continue;
+    end
     evalstr = strcat('MET.', MET_fields{i}, '= [');
     for j=1:(nargin-1)
+        if ~isfield(varargin{j},(MET_fields{i}))
+            varargin{j}.(MET_fields{i}) = NaN(size(varargin{j}.Time));
+        end
         evalstr = strcat(evalstr, 'varargin{', num2str(j), '}.', MET_fields{i}, ';');
+    end
+    if ~isfield(varargin{nargin},(MET_fields{i}))
+        varargin{nargin}.(MET_fields{i}) = NaN(size(varargin{nargin}.Time));
     end
     evalstr = strcat(evalstr, 'varargin{', num2str(nargin), '}.', MET_fields{i}, '];');
     eval(evalstr);
@@ -227,16 +264,22 @@ if (isfield(varargin{1},'README'))
 end
 
 % sort out time
-[MET.Time I] = sort(MET.Time);
+[~, I] = sort(MET.Time);
 
-for i=2:(length(MET_fields)-1)
+for i=1:(length(MET_fields))
+    if strcmpi(MET_fields{i},'README')
+        continue;
+    end
     MET.(MET_fields{i}) = MET.(MET_fields{i})(I);
 end
 
 %find unique time
-[MET.Time I J] = unique(MET.Time);
+[~, I, ~] = unique(MET.Time);
 
-for i=2:(length(MET_fields)-1)
+for i=1:(length(MET_fields))
+    if strcmpi(MET_fields{i},'README')
+        continue;
+    end
     MET.(MET_fields{i}) = MET.(MET_fields{i})(I);
 end
 
