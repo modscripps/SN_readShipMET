@@ -37,7 +37,7 @@ if ischar(filename)
                         if isfield(MET_tmp,varnames{k})
                             MET(i).(varnames{k}) = MET_tmp.(varnames{k});
                         else
-                            MET(i).(varnames{k}) = NaN(size(varnames{1}));
+                            MET(i).(varnames{k}) = NaN(size(MET_tmp.(varnames{1})));
                         end
                     end
                 end
