@@ -3,58 +3,59 @@ function MET = SN_readShipMET(filename)
 %
 % SN_READSHIPMET(FILENAME) returns a MET structure of variables described
 % for MET data files
+% 
+% SN_READSHIPMET(DIRNAME) reads all *.MET files in the directory DIRNAME
+% 
+% SN_READSHIPMET({FILE1, FILE2,...}) reads all files indicated
 %
 % Created 2012/03/30 San Nguyen
 % Updated 2012/06/09 San Nguyen - updated to read MET data for most ships
 % not just the ones on the R/V Revelle
 % Updated 2015/09/02 San Nguyen - update to combine MET data without losing
 % any fields added later on
-% Updated 2016/10/19 Emily Shroyer- Corrected Reanme Information
+% Updated 2016/10/19 Emily Shroyer- Corrected Readme Information
+% Updated 2016/10/20 San Nguyen - Update to read MET files in the same
+% folder to preserve maximum number of fields that might have been added
+% after the initial recording, not restricting number of fields to defined
+% by the first file.
 %
 
-if ischar(filename)
+% check if it is a single file or a directory and a set of files
+if ischar(filename) % dir or file
     switch exist(filename)
         case 2 % if it is a file
             fid = fopen(filename,'r');
             MET = SN_readShipMET(fid);
             fclose(fid);
-        case 7
-            my_METfiles = dir([filename '/*.MET']);
+        case 7 % if it is a directory
+            my_METfiles = dir(fullfile(filename, '*.MET'));
             if isempty(my_METfiles)
                 MET = [];
                 return
             else
-                disp(['reading ' my_METfiles(1).name]);
-                MET = SN_readShipMET([filename '/' my_METfiles(1).name]);
-                varnames = fieldnames(MET);
-                MET = repmat(MET,size(my_METfiles));
-                for i = 2:length(my_METfiles)
+                % prepare to read all files
+                MET = cell(size(my_METfiles));
+                % read the files in the directory
+                for i = 1:length(my_METfiles)
                     disp(['reading ' my_METfiles(i).name]);
-                    MET_tmp = SN_readShipMET([filename '/' my_METfiles(i).name]);
-                    for k = 1:numel(varnames)
-                        if strcmpi(varnames{k},'README')
-                            MET(i).(varnames{k}) = MET_tmp.(varnames{k});
-                        end
-                        if isfield(MET_tmp,varnames{k})
-                            MET(i).(varnames{k}) = MET_tmp.(varnames{k});
-                        else
-                            MET(i).(varnames{k}) = NaN(size(MET_tmp.(varnames{1})));
-                        end
-                    end
+                    MET{i} = SN_readShipMET(fullfile(filename,my_METfiles(i).name));
                 end
-                MET = SN_combineMET(MET);
+                % combine all files into one MET structure
+                MET = SN_combineMET(MET{:});
             end
         otherwise
             error('MATLAB:SN_readShipMET:wrongFILENAME','Invalid file specified.');
     end
-    
-elseif iscellstr(filename)
-    MET = SN_readShipMET(filename{1});
-    MET = repmat(MET,length(filename),1);
-    for i = 2:length(filename)
-        MET(i) = SN_readShipMET(filename{i});
+elseif iscellstr(filename) % cell of files
+    % prepare to read all files
+    MET = cell(size(filename));
+    % read all files
+    for i = 1:length(filename)
+        disp(['reading ' filename{i}]);
+        MET{i} = SN_readShipMET(filename{i});
     end
-    MET = SN_combineMET(MET);
+    % combine all files into one MET structure
+    MET = SN_combineMET(MET{:});
 else
     
     if (filename<1)
@@ -70,19 +71,8 @@ end
 
 % reading MET files through FID
 function MET = SN_readShipMETFile(fid)
-% struct_vars = {...
-%     'Time'; 'AT'; 'BP'; 'BC'; 'BS'; 'RH'; 'RT';...
-%     'DP'; 'PR'; 'LB'; 'LT'; 'LW'; 'SW'; 'PA'; 'WS';...
-%     'WD'; 'TW'; 'TI'; 'WS_2'; 'WD_2'; 'TW_2'; 'TI_2';...
-%     'TT'; 'TC'; 'SA'; 'SD'; 'SV'; 'TG'; 'FI'; 'PS';...
-%     'TT_2'; 'TC_2'; 'SA_2'; 'SD_2'; 'SV_2'; 'TG_2';...
-%     'OC'; 'OT'; 'OX'; 'OS'; 'FL'; 'FI_2'; 'PS_2';...
-%     'VP'; 'VR'; 'VH'; 'VX'; 'VY'; 'GY'; 'MB'; 'BT';...
-%     'SH'; 'SM'; 'SR'; 'LA'; 'LO'; 'GT'; 'CR'; 'SP';...
-%     'ZD'; 'GA'; 'GS'; 'ZO'; 'ZS'; 'ZT'; 'XX'; 'ZO_2';...
-%     'ZS_2'; 'ZT_2'; 'XX_2'; 'PZ'; 'PZ_2'; 'IP'; 'IV';...
-%     'IA'; 'SW_2'; 'SW_3'};
 
+% make sure the file marker begins at the start
 frewind(fid)
 fgetl(fid);
 str = fgetl(fid);
@@ -91,13 +81,16 @@ METdate = floor(datenum(str(7:end),'dd-mmm-yy  HH:MM:SS'));
 fgetl(fid);
 str = fgetl(fid);
 
+% get headers
 str = strrep(str,'#','');
 str = strrep(str,'-','_');
+% get the column labels
 struct_vars = textscan(str,'%s','EndOfLine',' ');
 struct_vars = struct_vars{1};
 
-
-data_str = char(ones(1,2*length(struct_vars)));
+% because the time have different reading format than other columns we have
+% to read in the time as string and all other columns as numbers
+data_str = char(ones(1,2*length(struct_vars))); % defining textscan pattern
 time_ind = NaN;
 for i = 1:length(struct_vars)
     if strcmpi(struct_vars{i},'Time')
@@ -112,6 +105,7 @@ if isnan(time_ind)
     error('MATLAB:SN_readShipMET','We can not find the time in the data file. Please check');
 end
 
+% read the whole file again with the textscan pattern to read in files
 frewind(fid)
 data = textscan(fid,[data_str '%*[^\n]'],'delimiter',' \t','MultipleDelimsAsOne',true,'CommentStyle','#');
 data{time_ind} = datenum(data{time_ind},'HHMMSS')-datenum('000000','HHMMSS')+METdate;
