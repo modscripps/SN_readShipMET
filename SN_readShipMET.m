@@ -9,6 +9,7 @@ function MET = SN_readShipMET(filename)
 % not just the ones on the R/V Revelle
 % Updated 2015/09/02 San Nguyen - update to combine MET data without losing
 % any fields added later on
+% Updated 2016/10/19 Emily Shroyer- Corrected Reanme Information
 %
 
 if ischar(filename)
@@ -126,80 +127,62 @@ for i = 1:length(struct_vars)
 end
 
 MET.README = {...
-    'AT:    Air Temperature';
-    'RH:    Relative Humidity';
-    'RT:    Relative Temperature';
-    'DP:    Dew Point';
-    'BP:    Barometric Pressure';
-    'BC:    Barometric Compression Temperature';
-    'PR:    Precipitation';
-    'PT:    Precipitation Temperature';
-    'WS:    Wind Speed';
-    'WD:    Wind Direction';
-    'WK:    ';
-    'TK:    ';
-    'TW:    ';
-    'TI:    ';
-    'SW:    Short wave radiation';
-    'LW:    Long wave radiation';
-    'LD:    Long wave radation dome temperature';
-    'LB:    Long wave radation body temperature';
-    'LT:    Long wave radation thermopile voltage';
-    'FM:    Flowmeter';
-    'FI:    Flowmeter';
-    'ST:    Surface seawater temperature';
-    'SC:    Surface seawater conductivity';
-    'VT:    A/D Volts';
-    'FL:    Fluorometer';
-    'TB:    ';
-    'TR:    Transmissometer';
-    'BA:    ';
-    'OC:    Oxygen';
-    'OT:    ';
-    'OS:    ';
-    'OX:    ';
-    'OG:    ';
-    'TT:    Thermosalinograph';
-    'TC:    ';
-    'SA:    ';
-    'SD:    ';
-    'SV:    ';
-    'XX:    ';
-    'PA:    Surface PAR';
-    'WT:    Auxiliary water temperature';
-    'AX:    Auxiliary air temperature';
-    'IP:    Instrumentation';
-    'IT:    ';
-    'IS:    ';
-    'IA:    ';
-    'IV:    ';
-    'IX:    ';
-    'PS:    Pressure';
-    'BT:    Water depth';
-    'LA:    NMEA messages';
-    'LO:    ';
-    'GT:    ';
-    'CR:    ';
-    'SP:    ';
-    'ZD:    ';
-    'GA:    ';
-    'GS:    ';
-    'GY:    Gyro';
-    'SH:    Ashtech heading';
-    'SM:    Ashtech pitch';
-    'SR:    Ashtech roll';
-    'TS:    Time server';
-    'ZO:    Winch wire out';
-    'ZS:    Winch wire speed';
-    'ZT:    Wihch wire tension';
-    'PH:    Alkalinity (pH)';
-    'VP:    Vertical reference unit pitch';
-    'VR:    Vertical reference unit roll';
-    'VH:    Vertical reference unit heave';
-    'VY:    Vertical reference unit ';
-    'VX:    Vertical reference unit ';
-    'SL:    Ship''s speed log (speed over water)';
-    'PZ:    Uncontaiminated seawater pump status';
+    'Time:  Time in Datenum Format';
+    'AT:    Air Temperature (deg C)';
+    'BP:    Barometric Pressure (mb)';
+    'PR:    Precipitation (mm)';
+    'RH:    Relative Humidity (%rh)';
+    'RT:    Relative Temperature (deg C)';
+    'DP:    Dew Point (deg C)';
+    'LD:    Long wave radation dome temperature (deg K)';
+    'LB:    Long wave radation body temperature (deg K)';
+    'LT:    Long wave radation thermopile voltage (volts)';
+    'LW:    Long wave radiation (W/m^2)';
+    'SW:    Short wave radiation (W/m^2)';
+    'PA:    Surface PAR (uE/sec/m^2)';
+    'WS:    Relative Wind Speed (m/s)';
+    'WD:    Relative Wind Direction (direction wind is coming from)';
+    'TW:    True Wind Speed (m/s)';
+    'TI:    True Wind Direction (direction wind is coming from)';
+    'TT:    TSG Temperature (deg C)';
+    'TC:    TSG Conductivity with slope offset  (mS/cm)';
+    'SA:    Salinity (psu)';
+    'SD:    Sigma t (kg/m^3)';
+    'SV:    Sound Speed (m/s)';
+    'TG:    TSG Conductivity without slope offset  (mS/cm)';
+    'FI:    Flowmeter (lpm)';
+    'PS:    Pressure (psi)';
+    'OC:    Oxygen Current (ua)';
+    'OT:    Oxygen Temperature (deg C)';
+    'OX:    Oxygem (ml/l)';
+    'OS:    Oxygen Saturation (ml/l)';
+    'FL:    Fluorometer (micro gm/l)';
+    'VP:    Vertical reference unit pitch (deg)';
+    'VR:    Vertical reference unit roll (deg)';
+    'VH:    Vertical reference unit heave (m)';
+    'VX:    Ships Trim (deg) ';
+    'VY:    Ships List (deg)';
+    'GY:    Gyro Heading (deg)';
+    'MB:    Water Depth (m Center Beam Depth)';
+    'BT:    Knudsen Water depth (m)';
+    'LA:    NMEA Latitude';
+    'LO:    NMEA Longitude';
+    'GT:    GPS time of Day (seconds, 0-86400)';
+    'CR:    Ships Course Over Ground (deg)';
+    'SP:    Ships Speed Over Ground (knots)';
+    'ZD:    GPS Date Time (seconds since 00:00:00 01/01/1970';
+    'GA:    GPS Altitude (m above/below mean sea level) ';
+    'GS:    GPS Status';
+    'SH:    Ashtech heading (deg)';
+    'SM:    Ashtech pitch (deg)';
+    'SR:    Ashtech roll (deg_';
+    'ZO:    Winch wire out (m)';
+    'ZS:    Winch wire speed (m/min)';
+    'ZT:    Wihch wire tension (lbs)';
+    'PZ:    Uncontaiminated seawater pump status (on/off)';
+    'IP:    CTD depth (m)';
+    'IV:    CTD velocity (m/s)';
+    'IA:    CTD Altimeter (m)';  
     };
 end
 
